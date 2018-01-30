@@ -51,6 +51,12 @@ $b:1px red solid;
     height: 30px;
     line-height: 30px;
     font-size: 15px;
+    position: fixed;
+    top: 3.5rem;
+    background: #EDEFF2;
+    opacity: .9;
+    filter:alpha(opacity=90);
+    z-index: 1;
     display: flex;
     justify-content: space-around;
     &>li{

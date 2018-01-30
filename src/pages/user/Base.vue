@@ -17,7 +17,7 @@
         <p>修改手机号</p>
         <p>关注微信小程序</p>
       </div>
-      <p class="login-out">退出登录</p>
+      <p class="login-out" @click="logout">退出登录</p>
     </div>
 </template>
 <script>
@@ -30,6 +30,9 @@ export default {
   methods:{
     back(){
       this.$router.push('/')
+    },
+    logout(){
+      this.$router.push('/login')
     }
   }
 }

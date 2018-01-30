@@ -13,13 +13,16 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "axios": "^0.17.1",
     "babel-plugin-component": "^1.1.0",
     "babel-preset-es2015": "^6.24.1",
     "element-ui": "^2.0.11",
     "node-sass": "^4.7.2",
     "sass-loader": "^6.0.6",
     "vue": "^2.5.2",
+    "vue-pull-to": "^0.1.6",
     "vue-router": "^3.0.1",
+    "vue-scroller": "^2.2.4",
     "vuex": "^3.0.1"
   },
   "devDependencies": {

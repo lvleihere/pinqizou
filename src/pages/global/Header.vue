@@ -70,7 +70,10 @@ $b: 1px red solid;
 .header {
   width: 100vw;
   height: 3.5rem;
-  position: relative;
+  position: fixed;
+  top: 0;
+  z-index: 9999;
+  background: #EFEFEF;
   &>img{
     height: 100%;
     float: left;

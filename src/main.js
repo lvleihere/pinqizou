@@ -13,6 +13,7 @@ Vue.config.productionTip = false
 Vue.use(ElementUI)
 /* eslint-disable no-new */
 Vue.prototype.rand = Date.now()
+Vue.prototype.url = 'http://pinqizou.com'
 
 new Vue({
   el: '#app',

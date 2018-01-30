@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="main-index">
     <Nav />
     <Main />
   </div>
@@ -16,5 +16,7 @@ export default {
 }
 </script>
 <style scoped>
-
+  .main-index{
+    padding-top: 30px;
+  }
 </style>
