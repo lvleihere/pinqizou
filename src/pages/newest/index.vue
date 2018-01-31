@@ -3,6 +3,7 @@
     <p class="loading" v-if="startLoadStatus">
       <i class="el-icon-loading"></i>
     </p>
+    <show v-if="0"></show>
     <ul class="post-all-box">
       <li v-for="(post, index) in posts"
           :key='index'
@@ -69,33 +70,21 @@
       <p>当前呈现版本 v.18.1.29</p>
     </footer>
      <transition name="el-zoom-in-bottom">
-        <div v-show="shareBoxStatus" class="transition-box">
-          <p  @click.stop="space">分享到</p>
-          <ul @click.stop="space" v-if="!copyStatus">
-            <li
-              v-for="(shareList, index) in shareLists"
-              :key="index"
-              @click="shareTo(index)"
-            >
-              <img :src="shareList.icon" alt="shareIcon">
-              <p>{{shareList.name}}</p>
-            </li>
-          </ul>
-          <div v-if="copyStatus" class="copyBox" @click.stop="space">
-            <p contenteditable="true">{{copyText}}</p>
-            <p>复制以上链接，将其狠狠的粘贴在你的朋友圈里！</p>
-          </div>
-          <p class="cancel-share">取消</p>
-        </div>
+        <share v-if="shareBoxStatus" :allPosts="posts"></share>
       </transition>
   </div>
 </template>
 <script>
 import axios from "axios";
 import bus from "@/store/Bus";
+import Show from '@/pages/global/Show'
+import Share from '@/pages/global/Share'
 
 export default {
-  components: {},
+  components: {
+    Show,
+    Share
+  },
   data() {
     return {
       loadMoreStatus: 0,
@@ -115,38 +104,14 @@ export default {
       commentStatus: -1,
       commentWords: "",
       shareBoxStatus: 0,
-      shareLists: [
-        {
-          name: "QQ",
-          icon: "/static/img/share/qq.png"
-        },
-        {
-          name: "微信",
-          icon: "/static/img/share/wx.png"
-        },
-        {
-          name: "朋友圈",
-          icon: "/static/img/share/friend.png"
-        },
-        {
-          name: "QQ空间",
-          icon: "/static/img/share/zone.png"
-        },
-        {
-          name: "微博",
-          icon: "/static/img/share/weibo.png"
-        }
-      ],
       startLoadStatus: 1,
-      copyStatus:0,
-      copyText:''
+
     };
   },
   created() {
     this.getAllPosts();
     bus.$on("bodyClick", () => {
       this.shareBoxStatus = 0;
-      this.copyStatus = 0
     });
   },
   methods: {
@@ -156,6 +121,7 @@ export default {
     tagRandomColor() {
       return this.tagColor[Math.round(Math.random() * (4 - 0) + 0)];
     },
+    //获取所有的帖子
     getAllPosts() {
       let url =
         "https://www.easy-mock.com/mock/5a6b41662c8ae92ce8d3ca91/pinqizou/all_posts";
@@ -176,9 +142,11 @@ export default {
         }
       });
     },
+    //点赞
     good(index) {
       this.posts[index].goodNum++;
     },
+    //评论
     comment(index) {
       this.commentWords = "";
       if (this.commentStatus === -1 && this.commentStatus !== index) {
@@ -189,6 +157,7 @@ export default {
         this.commentStatus = index;
       }
     },
+    //打开底部的分享框
     openShow(index) {
       this.shareBoxStatus = !this.shareBoxStatus;
     },
@@ -203,63 +172,13 @@ export default {
       });
       this.commentWords = "";
     },
+    //加载更多
     loadMore() {
       this.loadStatus = !this.loadStatus;
     },
+    //底部app详情
     showAppInfo() {
       this.$router.push("/appinfo");
-    },
-    space() {
-      return false;
-    },
-    shareTo(index) {
-      console.log(
-        `${this.posts[index].nick}正在【拼起走网】, Ta邀请你在：【${
-          this.posts[index].time
-        }】, 一起来拼车哟~`
-      );
-
-      switch (index) {
-        case 0:
-
-          console.log("QQ");
-          window.open(
-            ` http://connect.qq.com/widget/shareqq/index.html?url=${this.url}&title=我正在【拼起走网】, 我邀请你在：【${
-              this.posts[index].time
-            }】, 一起来拼车哟~来看看节省一半的拼车神技！！`,
-            "newwindow"
-          );
-          break;
-        case 1:
-          console.log("微信");
-          this.copyStatus = 1
-          this.copyText = `我正在【拼起走网${this.url}】, 一起来拼车哟~来看看节省一半的拼车神技！！`
-          break;
-        case 2:
-          console.log("朋友圈");
-          this.copyStatus = 1
-           this.copyText = `我正在【拼起走网${this.url}】, 一起来拼车哟~来看看节省一半的拼车神技！！`
-          break;
-
-        case 3:
-          console.log("QQ空间");
-          window.open(
-            `https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=${this.url}&title=我正在【拼起走网】, 我邀请你在：【${
-              this.posts[index].time
-            }】, 一起来拼车哟~来看看节省一半的拼车神技！！&desc=&summary=&site=&pics=`,
-            "newwindow"
-          );
-          break;
-        case 4:
-          console.log("微博");
-          window.open(
-            `http://service.weibo.com/share/share.php?url=${this.url}&title=我正在【拼起走网】, 我邀请你在：【${
-              this.posts[index].time
-            }】, 一起来拼车哟~来看看节省一半的拼车神技！！&appkey=1214333208&pic=`,
-            "newwindow"
-          );
-          break;
-      }
     }
   }
 };
@@ -372,52 +291,5 @@ footer {
     color: #aba9a9;
   }
 }
-.transition-box {
-  width: 100%;
-  height: 12rem;
-  border-radius: 6px 6px 0 0;
-  background-color: #fff;
-  text-align: center;
-  color: grey;
-  position: fixed;
-  bottom: 0;
-  box-sizing: border-box;
-  padding: 10px 0;
-  & > ul {
-    display: flex;
-    margin-top: 1rem;
-    padding: 0 10px;
-    & > li {
-      flex: 0 0 20%;
-      text-align: center;
-      & > img {
-        width: 3rem;
-      }
-    }
-  }
-  .copyBox{
-    &>p{
-      line-height: 2rem;
-      &:first-of-type{
-        font-size: 2.5rem;
-        padding: 0 10px;
-        color:grey;
-        margin-top: 5px;
-      }
-      &:last-of-type{
-        margin-top: 3px;
-      }
-    }
-  }
-  .cancel-share {
-    border-top: 1px #eff0f1 solid;
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    line-height: 2.5rem;
-    color: #111;
-    letter-spacing: 3px;
-    text-align: center;
-  }
-}
+
 </style>

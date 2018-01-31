@@ -72,7 +72,7 @@ $b: 1px red solid;
   height: 3.5rem;
   position: fixed;
   top: 0;
-  z-index: 9999;
+  z-index: 2;
   background: #EFEFEF;
   &>img{
     height: 100%;
