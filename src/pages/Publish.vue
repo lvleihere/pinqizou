@@ -63,6 +63,9 @@
   </el-form>
 </template>
 <script>
+import axios from "axios";
+import moment from "moment";
+
 export default {
   data() {
     return {
@@ -104,16 +107,7 @@ export default {
     submitForm(formName) {
       this.$refs[formName].validate(valid => {
         if (valid) {
-          console.log('标题')
-          console.log(this.ruleForm.title)
-          console.log('时间')
-          console.log(this.startTime)
-          console.log(this.endTime)
-          console.log('标签')
-          console.log(this.dynamicTags)
-          console.log('主题')
-          console.log(this.ruleForm.content)
-          this.$router.push('/')
+          this.publish();
         } else {
           console.log("error submit!!");
           return false;
@@ -145,6 +139,36 @@ export default {
       }
       this.inputVisible = false;
       this.inputValue = "";
+    },
+    publish(){
+      let uid = localStorage.getItem('uid')
+      let tag = `起${this.startTime},止${this.endTime},${this.dynamicTags.join(',')}`
+
+      let url = `${this.api}/publish.php`
+      axios({
+        method:'post',
+        url,
+        params:{
+          uid,
+          title:this.ruleForm.title,
+          time:Date.now().toString().slice(0,10),
+          tag,
+          content:this.ruleForm.content,
+          good:0,
+          v:this.rand
+        }
+      })
+        .then(res=>{
+          if(res.data.code === 0){
+            this.$message({
+              message: "发布成功~",
+              type: "success",
+              center: true
+            })
+          this.$router.push('/')
+          }
+        })
+        .catch(err=>{})
     }
   }
 };

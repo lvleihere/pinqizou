@@ -38,13 +38,16 @@
 </el-form>
 </template>
 <script>
+import axios from "axios";
+import moment from "moment";
+
 export default {
   data() {
     return {
       ruleForm: {
         name: "",
-        age:"",
-        job:"",
+        age: "",
+        job: "",
         type: "",
         desc: ""
       },
@@ -53,15 +56,9 @@ export default {
           { required: true, message: "请输入您的名字", trigger: "blur" },
           { min: 2, max: 5, message: "长度在 2 到 5 个字符", trigger: "blur" }
         ],
-        age:[
-          { required: true, message: "请选择您的年龄", trigger: "blur" }
-        ],
-        job:[
-          { required: true, message: "请选择您的职业", trigger: "blur" }
-        ],
-        type: [
-          { required: true, message: "请选择建议类型", trigger: "blur" }
-        ],
+        age: [{ required: true, message: "请选择您的年龄", trigger: "blur" }],
+        job: [{ required: true, message: "请选择您的职业", trigger: "blur" }],
+        type: [{ required: true, message: "请选择建议类型", trigger: "blur" }],
         desc: [{ required: true, message: "请填写详细", trigger: "blur" }]
       }
     };
@@ -70,7 +67,7 @@ export default {
     submitForm(formName) {
       this.$refs[formName].validate(valid => {
         if (valid) {
-          alert("submit!");
+          this.sendSuggest();
         } else {
           console.log("error submit!!");
           return false;
@@ -79,19 +76,62 @@ export default {
     },
     resetForm(formName) {
       this.$refs[formName].resetFields();
+    },
+    sendSuggest() {
+      let self = this;
+      let url = `${this.api}/suggest.php`;
+      let uid = localStorage.getItem("uid");
+      axios({
+        method: "get",
+        url,
+        params: {
+          uid,
+          name: self.ruleForm.name,
+          age: self.ruleForm.age,
+          job: self.ruleForm.job,
+          type: self.ruleForm.type,
+          desc: self.ruleForm.desc,
+          time: moment().format("YYYY-MM-DD HH:mm"),
+          v: self.rand
+        }
+      })
+        .then(res => {
+          if (res.data.code === 0) {
+            this.$message({
+              message: "感谢提交~",
+              type: "success",
+              center: true
+            });
+            self.initData();
+          }else{
+            this.$message({
+              message: "提交失败~",
+              type: "error",
+              center: true
+            });
+          }
+        })
+        .catch(err => {});
+    },
+    initData() {
+      this.ruleForm.name = "";
+      this.ruleForm.age = "";
+      this.ruleForm.job = "";
+      this.ruleForm.type = "";
+      this.ruleForm.desc = "";
     }
   }
 };
 </script>
 <style lang='scss' scoped>
-  .wrap{
-    margin-top: 3rem;
-    width: 88vw;
-  }
-  .selection{
-    width: 100%;
-  }
-  .btn{
-    width: 40%;
-  }
+.wrap {
+  margin-top: 3rem;
+  width: 88vw;
+}
+.selection {
+  width: 100%;
+}
+.btn {
+  width: 40%;
+}
 </style>

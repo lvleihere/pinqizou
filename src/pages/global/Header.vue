@@ -5,7 +5,7 @@
       <span>登陆</span>&nbsp;<span class="center-line">|</span>&nbsp;<span>注册</span>
     </div>
     <div class="info" v-if="userStatus">
-      <img src="/static/img/head3.jpg" alt="headImg" @click.stop="showNav">
+      <img :src="headImg" alt="headImg" @click.stop="showNav">
       <span class="publish" @click="publish">发布</span>
     </div>
     <ul class="user-nav" v-if="userNavStatus">
@@ -24,9 +24,7 @@ import bus from "@/store/Bus";
 export default {
   data(){
     return {
-      user:{
-        name:'吕雷'
-      }
+      headImg:''
     }
   },
   created(){
@@ -34,6 +32,12 @@ export default {
     bus.$on('bodyClick', () => {
       self.closeUserNav()
     })
+    if(localStorage.getItem('uid')){
+      this.changeUserStatus(1)
+    }
+  },
+  mounted(){
+    this.headImg = localStorage.getItem('headImg')
   },
   computed:{
     ...mapState(['userStatus','userNavStatus'])
@@ -53,13 +57,16 @@ export default {
       this.changeUserNavStatus()
     },
     goBase(){
-      this.$router.push('/user/base')
+      let uid = localStorage.getItem('uid')
+      this.$router.push(`/user/base/${uid}`)
     },
     goMsg(){
       this.$router.push('/user/msg')
     },
     loginOut(){
-      this.changeUserStatus()
+      this.changeUserStatus(0)
+      localStorage.removeItem('uid')
+      localStorage.removeItem('headImg')
       this.$router.push('/login')
     }
   }

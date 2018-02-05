@@ -8,10 +8,19 @@
           @click="changeNav(index)"
         >{{list}}</span>
       </nav>
+      <private v-if="0 === navStatus"/>
+      <system  v-if="1 === navStatus" />
   </div>
 </template>
 <script>
+import Private from '@/pages/user/Private'
+import System from '@/pages/user/System'
+
 export default {
+  components:{
+    Private,
+    System
+  },
   data(){
     return {
       msgLists:['私信','系统消息'],

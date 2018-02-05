@@ -14,6 +14,8 @@ Vue.use(ElementUI)
 /* eslint-disable no-new */
 Vue.prototype.rand = Date.now()
 Vue.prototype.url = 'http://pinqizou.com'
+Vue.prototype.api = 'http://localhost:8089/server'
+Vue.prototype.uid = localStorage.getItem('uid')
 
 new Vue({
   el: '#app',

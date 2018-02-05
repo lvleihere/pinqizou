@@ -38,7 +38,7 @@ export default new Router({
       component: User,
       children: [
         {
-          path: 'base',
+          path: 'base/:uid?',
           component: Base
         },
         {

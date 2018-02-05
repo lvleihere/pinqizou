@@ -1,8 +1,8 @@
 <template>
   <section>
     <newest v-show="0 === navTab"></newest>
-    <discuss v-show="1 === navTab"></discuss>
-    <suggest v-show="2 === navTab"></suggest>
+    <discuss v-if="1 === navTab"></discuss>
+    <suggest v-if="2 === navTab"></suggest>
   </section>
 </template>
 <script>

@@ -16,6 +16,7 @@
 </template>
 <script>
 import { mapState, mapMutations } from 'vuex'
+import axios from 'axios'
 
 export default {
   data(){
@@ -77,13 +78,39 @@ export default {
         this.$router.push('/register')
       },
       login(){
-        console.log(this.ruleForm.username,this.ruleForm.password)
-        if(this.ruleForm.username == '15213089991' && this.ruleForm.password == 1){
-          this.changeUserStatus()
-          this.$router.push('/')
-        }else{
-          alert('error')
-        }
+        let url = `${this.api}/user/login.php`
+        axios({
+          method:'post',
+          url,
+          params:{
+            username:this.ruleForm.username,
+            password:this.ruleForm.password,
+            v:this.rand
+          }
+        })
+          .then(res => {
+            let { data } = res.data
+            if(res.data.code === 0){
+              this.$message({
+                message: '登陆成功~',
+                type: 'success',
+                center:true
+              });
+              localStorage.setItem('uid',data.uid)
+              localStorage.setItem('headImg',data.headImg)
+              this.changeUserStatus(1)
+              this.$router.push('/')
+            }else{
+              this.$message({
+                message: '登陆失败！请检查~',
+                type: 'error',
+                center:true
+              });
+            }
+          })
+          .catch(err=>{
+            console.log(err)
+          })
       }
   }
 

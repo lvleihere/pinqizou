@@ -9,12 +9,12 @@
           :key='index'
           class="post-box clearfix"
       >
-        <img :src="post.headImg" alt="headImg">
+        <img :src="post.headImg" alt="headImg" @click="lookUser(index)">
         <div class="post-content">
           <p class="title" >{{post.title}}</p>
           <p class="author-info">
             <span :style="{color:titleRandomColor()}">{{post.nick}}</span>&nbsp;
-            <span>{{post.time}}</span>
+            <span class="title-time">{{post.time}}</span>
           </p>
           <p class="tag-box">
             <el-tag
@@ -30,15 +30,15 @@
           <p class="content">{{post.content}}</p>
           <div class="control-box">
             <p @click="good(index)"><img src="/static/img/icon/good.png" alt="good"><span>{{post.goodNum}}</span></p>
-            <p @click="comment(index)"><img src="/static/img/icon/comment.png" alt="comment" class="comment-icon"><span>{{post.comment.content.length}}</span></p>
+            <p @click.stop="comment(index)"><img src="/static/img/icon/comment.png" alt="comment" class="comment-icon"><span>{{post.comment.length}}</span></p>
             <p @click.stop="openShow(index)"><img src="/static/img/icon/share.png" alt="share"></p>
           </div>
           <ul class="comment-box">
-            <li v-for="(listComment, index) in post.comment.content" :key="index">
-              <img :src="listComment.img" alt="headImg">
+            <li v-for="(listComment, i) in post.comment" :key="i">
+              <img :src="listComment.img" alt="headImg" @click="lookCommentUser(i)">
               <div class="bin-comment">
                 <p class="comment-person-info">
-                  <span>{{listComment.nick}}</span>&nbsp;&nbsp;<span class="comment-time">{{listComment.time}}</span>
+                  <span>{{listComment.nick}}</span><span class="comment-time">{{listComment.time}}</span>
                 </p>
                 <p class="comment-content">
                   {{listComment.word}}
@@ -47,12 +47,13 @@
             </li>
           </ul>
           <transition name="el-zoom-in-top">
-          <div class="edit-comment" v-if="index === commentStatus">
+          <div class="edit-comment" v-if="index === commentStatus" @click.stop="space">
             <el-input
               placeholder="回复内容在这里"
               class="input-with-select"
-              v-model="commentWords"
+              v-model.lazy="commentWords"
               :autofocus='true'
+              @keypress.enter.native="reply(index)"
             >
               <el-button slot="append" @click="reply(index)">回复</el-button>
             </el-input>
@@ -62,8 +63,12 @@
       </li>
     </ul>
 
-    <p class="load-more" v-if="loadMoreStatus" @click="loadMore">
-      <span>加载更多</span><i class="el-icon-loading" v-if="loadStatus"></i>
+    <p class="load-more"
+      :class="{shark:sharkStatus}"
+      v-if="loadMoreStatus"
+      @click="loadMore" ref="loadMore"
+    >
+      <span>{{loadText}}</span><i class="el-icon-loading" v-if="loadingStatus"></i>
     </p>
     <footer @click="showAppInfo">
       <p>All Rights Reserved @lvleihere</p>
@@ -77,8 +82,11 @@
 <script>
 import axios from "axios";
 import bus from "@/store/Bus";
-import Show from '@/pages/global/Show'
-import Share from '@/pages/global/Share'
+import Show from "@/pages/global/Show";
+import Share from "@/pages/global/Share";
+import { mapState, mapMutations } from "vuex";
+import moment from "moment";
+import timeJs from "time.js";
 
 export default {
   components: {
@@ -88,8 +96,8 @@ export default {
   data() {
     return {
       loadMoreStatus: 0,
-      loadStatus: 0,
-      posts: null,
+      loadingStatus: 0,
+      posts: [],
       titleColor: [
         "#F3D23A",
         "#74EED6",
@@ -105,16 +113,25 @@ export default {
       commentWords: "",
       shareBoxStatus: 0,
       startLoadStatus: 1,
-
+      loadText: "加载更多",
+      sharkStatus: 1 //laoding抖动
     };
   },
   created() {
-    this.getAllPosts();
+    this.getAllPosts(0);
     bus.$on("bodyClick", () => {
       this.shareBoxStatus = 0;
+      this.commentStatus = null;
     });
   },
+  computed: {
+    ...mapState(["postStart"])
+  },
   methods: {
+    ...mapMutations(["changePostStart"]),
+    space() {
+      return false;
+    },
     titleRandomColor() {
       return this.titleColor[Math.round(Math.random() * (5 - 0) + 0)];
     },
@@ -122,21 +139,36 @@ export default {
       return this.tagColor[Math.round(Math.random() * (4 - 0) + 0)];
     },
     //获取所有的帖子
-    getAllPosts() {
-      let url =
-        "https://www.easy-mock.com/mock/5a6b41662c8ae92ce8d3ca91/pinqizou/all_posts";
+    getAllPosts(start) {
+      let url = `${this.api}/getpost.php`;
       axios({
         method: "get",
         url,
         params: {
+          start,
           v: this.rand
         }
       }).then(res => {
         let result = res.data;
         if (result.code === 0) {
           let { data } = result;
-          this.posts = data;
+          if (data.length < 10) {
+            this.loadText = "我是有底线滴~";
+            this.$refs.loadMore.style.background = "grey";
+            this.sharkStatus = 0;
+          }
+          this.posts = this.posts.concat(data);
+          data.forEach((v, i) => {
+            v.time = timeJs.ago(v.time);
+            v.comment.forEach(c => {
+              c.time = timeJs.ago(c.time);
+            });
+          });
+          this.posts.forEach(v => {
+            "string" === typeof v.tags ? (v.tags = v.tags.split(",")) : null;
+          });
 
+          this.loadingStatus = 0;
           this.startLoadStatus = 0;
           this.loadMoreStatus = 1;
         }
@@ -144,41 +176,129 @@ export default {
     },
     //点赞
     good(index) {
-      this.posts[index].goodNum++;
+      let uid = localStorage.getItem("uid");
+      if(!uid){
+        this.$message({
+          message:'请先登录~',
+          type:'errir',
+          center:true
+        })
+      }else{
+        let tid = this.posts[index].tid;
+        let url = `${this.api}/good.php`;
+        axios({
+          method: "get",
+          url,
+          params: {
+            tid,
+            uid,
+            v: this.rand
+          }
+        }).then(res => {
+          let code = res.data.code;
+          switch (code) {
+            case -1:
+              this.posts[index].goodNum--;
+              break;
+            case 1:
+              this.posts[index].goodNum++;
+              break;
+          }
+        });
+      }
     },
     //评论
     comment(index) {
-      this.commentWords = "";
-      if (this.commentStatus === -1 && this.commentStatus !== index) {
-        this.commentStatus = index;
-      } else if (this.commentStatus === index) {
-        this.commentStatus = -1;
-      } else {
-        this.commentStatus = index;
+      let uid = localStorage.getItem("uid");
+      if(!uid){
+        this.$message({
+          message:'请先登录~',
+          type:'errir',
+          center:true
+        })
+      }else{
+        this.commentWords = "";
+        if (this.commentStatus === -1 && this.commentStatus !== index) {
+          this.commentStatus = index;
+        } else if (this.commentStatus === index) {
+          this.commentStatus = -1;
+        } else {
+          this.commentStatus = index;
+        }
       }
+
     },
     //打开底部的分享框
     openShow(index) {
       this.shareBoxStatus = !this.shareBoxStatus;
     },
     reply(index) {
-      //待改变api
-      this.posts[index].comment.content.push({
-        uid: 5,
-        img: "/static/img/head3.jpg",
-        nick: "胡瑶",
-        time: "2018-1-27 16:55",
-        word: this.commentWords
-      });
-      this.commentWords = "";
+      if (!this.commentWords) {
+        this.$message({
+          message: "评论不能为空!",
+          type: "error",
+          center: true
+        });
+      } else {
+        let self = this;
+        let uid = localStorage.getItem("uid");
+        let content = this.commentWords;
+        let url = `${this.api}/comment.php`;
+
+        axios({
+          method: "post",
+          url,
+          params: {
+            tid: self.posts[index].tid,
+            uid,
+            content,
+            time: Date.now()
+              .toString()
+              .slice(0, 10),
+            v: this.rand
+          }
+        })
+          .then(res => {
+            if (res.data.code === 0) {
+              let { data } = res.data;
+              self.posts[index].comment.push({
+                uid,
+                img: data.img,
+                nick: data.nick,
+                time: timeJs.ago(data.time),
+                word: data.word
+              });
+              this.$message({
+                message: "评论成功~",
+                type: "success",
+                center: true
+              });
+              this.commentWords = "";
+              this.commentStatus = -1;
+            }
+          })
+          .catch(err > {});
+      }
     },
     //加载更多
     loadMore() {
-      this.loadStatus = !this.loadStatus;
+      if (this.sharkStatus) {
+        this.loadingStatus = 1;
+        this.changePostStart();
+        this.getAllPosts(this.postStart);
+      }
     },
     //底部app详情
     showAppInfo() {
       this.$router.push("/appinfo");
+    },
+    lookUser(index) {
+      let uid = this.posts[index].uid;
+      this.$router.push(`/user/base/${uid}`);
+    },
+    lookCommentUser(i) {
+      let uid = this.posts[i].uid;
+      this.$router.push(`/user/base/${uid}`);
     }
   }
 };
@@ -208,6 +328,10 @@ $b: 1px red solid;
       font-size: 16px;
     }
     .author-info {
+      .title-time {
+        float: right;
+        margin-right: 3rem;
+      }
     }
     .tag-box {
       margin-top: 5px;
@@ -253,6 +377,7 @@ $b: 1px red solid;
         .comment-person-info {
           .comment-time {
             color: grey;
+            margin-left: 20px;
             // float: right;
             // padding-right: 3rem;
           }
@@ -281,6 +406,32 @@ $b: 1px red solid;
   font-size: 2.5rem;
   letter-spacing: 1px;
 }
+.shark {
+  animation: shark 2s ease-in-out infinite alternate;
+}
+@keyframes shark {
+  0% {
+    transform: translateX(-2px);
+  }
+  2% {
+    transform: translateX(0);
+  }
+  4% {
+    transform: translateX(2px);
+  }
+  6% {
+    transform: translateX(0);
+  }
+  8% {
+    transform: translateX(-2px);
+  }
+  10% {
+    transform: translateX(0);
+  }
+  90% {
+    transform: translateX(0);
+  }
+}
 .load-more-active {
   background: #5eabfb;
 }
@@ -291,5 +442,4 @@ footer {
     color: #aba9a9;
   }
 }
-
 </style>

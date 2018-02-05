@@ -4,9 +4,14 @@
   </div>
 </template>
 <script>
+import axios from 'axios'
+import moment from 'moment'
+import timeJs from 'time.js'
 
 export default {
-  components: {}
+  mounted(){
+    console.log(timeJs.ago(1517003205922))
+  }
 };
 </script>
 <style lang='scss' scoped>

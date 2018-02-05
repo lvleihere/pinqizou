@@ -10,7 +10,8 @@ Vue.use(Vuex)
 const state = {
   navTab: 0,    //导航切换
   userStatus: 0, //用户登陆注册框  个人info  切换,
-  userNavStatus: 0
+  userNavStatus: 0,
+  postStart: 0
 }
 
 export default new Vuex.Store({
