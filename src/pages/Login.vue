@@ -1,5 +1,6 @@
 <template>
   <div class="login">
+    <p>ceshi</p>
     <p><span>登陆中，没有账号？</span><span class="go-register" @click="goRegister">去注册</span></p>
     <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" >
       <el-form-item prop="username" class="babel-title">
